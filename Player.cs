@@ -1,79 +1,76 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    private Rigidbody2D rb;
-    private float HorizontalMove = 0f;
-    private bool FacingRight = true;
+    public float speed;
+    private float moveInput;
+    private float timeBtwAttack;
+    public float health;
+    public float startTimeBtwAttack;
+
     public Transform attackPos;
     public LayerMask enemy;
     public float attackRange;
     public int damage;
-    public Animator anim;
-    public int health;
 
-
-    [Header("Player Movement Settings")]
-    [Range(0, 10f)] public float speed = 1f;
-
-    void Start()
+    private Rigidbody2D rb;
+    private Animator anim;
+    public bool facingRight = true;
+   
+    private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+        rb =  GetComponent<Rigidbody2D>();
     }
 
-    void Update()
+    
+    void FixedUpdate()
     {
-        if(health<=0)
+        if (health <= 0)
         {
-            Destroy(gameObject);
+            GetComponent<Collider2D>().enabled = false;
+            gameObject.SetActive(false);
         }
-        HorizontalMove = Input.GetAxisRaw("Horizontal") * speed;
-        if (Input.GetMouseButton(0))
+        moveInput = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+        if(facingRight == false && moveInput > 0)
         {
-            anim.SetTrigger("attack");
-            Collider2D[] enemies = Physics2D.OverlapCircleAll(attackPos.position, attackRange,enemy);
+            Flip();
+        }
+        else if (facingRight == true && moveInput < 0)
+        {
+            Flip();
+        }
+        if (timeBtwAttack <= 0)
+        {
+            if ( Input.GetMouseButton(0))
+            {
+                anim.SetTrigger("attack");
+            }
+        }
+        
+    }
+    public void OnAttack()
+    {
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(attackPos.position, attackRange, enemy);
             for (int i = 0; i<enemies.Length;i++)
             {
                 enemies[i].GetComponent<Enemy>().TakeDamage(damage);
             }
-            
-        }
 
-        if (HorizontalMove < 0 && FacingRight)
-        {
-            Flip();
-        }
-        else if (HorizontalMove > 0 && !FacingRight)
-        {
-            Flip();
-        }
     }
-
     private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(attackPos.position,attackRange);
-        }
-    private void FixedUpdate()
     {
-        Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
-        rb.velocity = targetVelocity;
-
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(attackPos.position,attackRange);
     }
-
-    private void Flip()
+    void Flip()
     {
-        FacingRight = !FacingRight;
-
-        Vector3 theScale = transform.localScale;
-        theScale.x *= -1;
-        transform.localScale = theScale;
-    }
-    public void TakeDamage(int damage)
-    {
-        health -= damage;
+        facingRight = !facingRight;
+        Vector3 Scaler = transform.localScale;
+        Scaler.x *= -1;
+        transform.localScale = Scaler;
     }
 }
