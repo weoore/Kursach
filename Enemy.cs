@@ -4,35 +4,81 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public float speed;
     public int health;
     public int damage;
+    public float speed;
+    private float stopTime;
+    public float startStopTime;
+    public float normalSpeed;
     private Player player;
+    private Tower tower;
 
-    private void Srart()
+    private Score sm;
+
+    private float timeBtwAttack;
+    public float startTimeBtwAttack;
+
+    private void Start()
     {
         player = FindObjectOfType<Player>();
+        normalSpeed = speed;
+        sm = FindObjectOfType<Score>();
+        tower = FindObjectOfType<Tower>();
+    }
+
+
+    private void Update()
+    {
+        if (stopTime <= 0)
+        {
+            speed = normalSpeed;
+        }
+        else
+        {
+            speed = 0;
+            stopTime -= Time.deltaTime;
+        }
+        if (health <= 0 )
+        {
+            sm.Kill();
+            Destroy(gameObject);
+        }
+        transform.Translate(Vector2.left * speed * Time.deltaTime);
     }
 
     public void TakeDamage(int damage)
     {
-        health -= damage;
+        stopTime = startStopTime;
+        health -=damage;
     }
 
-    void Update()
+    public void OnTriggerStay2D(Collider2D other)
     {
-        transform.Translate(Vector2.left * speed * Time.deltaTime);
-        if(health<=0)
+        if(other.CompareTag("Player"))
         {
-            Destroy(gameObject);
+            if(timeBtwAttack <=0)
+            {
+                player.health -= damage;
+                timeBtwAttack = startTimeBtwAttack;
+
+            }
+            else 
+            {
+                timeBtwAttack -= Time.deltaTime;
+            }
         }
-    }
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        
-        if (other.CompareTag("Player"))
+        if(other.CompareTag("Tower"))
         {
-            player.GetComponent<Player>().TakeDamage(damage);
+            if(timeBtwAttack <=0)
+            {
+                tower.health -= damage;
+                timeBtwAttack = startTimeBtwAttack;
+
+            }
+            else 
+            {
+                timeBtwAttack -= Time.deltaTime;
+            }
         }
     }
 }
